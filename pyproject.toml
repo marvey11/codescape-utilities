@@ -1,7 +1,7 @@
 [project]
-name = "monorepo-root"
+name = "codescape-utilities"
 version = "0.1.0"
-description = "Monorepo root project for sample apps and libraries"
+description = "Monorepo for a collection of tools and utilities to support the Codescape project."
 readme = "README.md"
 authors = [
     { name = "Marco Wegner", email = "673439+marvey11@users.noreply.github.com" },
