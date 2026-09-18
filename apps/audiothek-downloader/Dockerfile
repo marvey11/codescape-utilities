@@ -13,23 +13,20 @@ WORKDIR /app
 
 # Copy workspace metadata files to cache dependency installation
 COPY pyproject.toml uv.lock ./
-COPY apps/runner/pyproject.toml apps/runner/README.md ./apps/runner/
-COPY libs/core/pyproject.toml libs/core/README.md ./libs/core/
-
-# Sync dependencies without non-required packages or editable installs first
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-install-workspace --package runner
-
+COPY apps/audiothek-downloader/pyproject.toml apps/audiothek-downloader/README.md ./apps/audiothek-downloader/
 # Copy full source code for workspace packages
-COPY apps/runner/src ./apps/runner/src
-COPY libs/core/src ./libs/core/src
+COPY apps/audiothek-downloader/src ./apps/audiothek-downloader/src
 
 # Perform final sync to install workspace packages into environment
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-editable --package runner
+    uv sync \
+    --frozen \
+    --no-dev \
+    --no-editable \
+    --package audiothek-downloader
 
 # ==========================================
-# Stage 2: Minimal Production Runtime
+# Stage 2: Production Runtime
 # ==========================================
 FROM python:3.12-slim-bookworm AS runtime
 
@@ -40,12 +37,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Create a non-root user for runtime security
-RUN groupadd -g 999 appuser && \
-    useradd -r -u 999 -g appuser appuser
+RUN groupadd -g 1000 appuser && \
+    useradd -r -u 1000 -g appuser appuser
 
 # Copy installed virtual environment from builder stage
 COPY --from=builder /app/.venv /app/.venv
 
+# Define volume mount points
+VOLUME ["/data", "/podcasts"]
+
 USER appuser
 
-ENTRYPOINT ["python", "-m", "runner.main"]
+ENTRYPOINT ["audiothek-downloader"]
+CMD ["--application-data-dir", "/data", "--podcast-storage-dir", "/podcasts"]
