@@ -1,0 +1,16 @@
+[Unit]
+Description=Audiothek Downloader Batch Run
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Allows overriding the Docker image or mount paths via an environment file if needed
+EnvironmentFile=%h/.config/audiothek-downloader/env
+ExecStart=/bin/sh -c '/usr/bin/docker run --rm \
+    -v "${HOME}/.codescape/audiothek-downloader:/data:rw" \
+    -v "${PODCAST_STORAGE_DIR}:/podcasts:rw" \
+    "${DOCKER_IMAGE}"'
+
+[Install]
+WantedBy=default.target
