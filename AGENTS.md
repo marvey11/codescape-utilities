@@ -127,8 +127,9 @@ uv run pre-commit run --all-files
 uv run pre-commit run --all-files --hook-stage pre-push
 ```
 
-The configured hooks verify the uv lockfile, large files, JSON, TOML, YAML, EOFs,
-trailing whitespace, Ruff linting, and Ruff formatting. The pre-push stage also runs:
+The configured hooks verify the uv lockfile, large files, JSON, TOML, YAML,
+Markdown, EOFs, trailing whitespace, Ruff linting, and Ruff formatting. The
+pre-push stage also runs:
 
 ```sh
 uv run --all-packages pytest
