@@ -7,10 +7,12 @@ Wants=network-online.target
 Type=oneshot
 # Allows overriding the Docker image or mount paths via an environment file if needed
 EnvironmentFile=%h/.config/codescape/audiothek-downloader/env
-ExecStart=/bin/sh -c '/usr/bin/docker run --rm \
-    -v "${HOME}/.codescape/audiothek-downloader:/data:rw" \
-    -v "${PODCAST_STORAGE_DIR}:/podcasts:rw" \
-    "${DOCKER_IMAGE}"'
+# Pull the docker image before execution
+ExecStartPre=/usr/bin/docker pull ${DOCKER_IMAGE}
+ExecStart=/usr/bin/docker run --rm \
+    -v %h/.codescape/audiothek-downloader:/data:rw \
+    -v ${PODCAST_STORAGE_DIR}:/podcasts:rw \
+    ${DOCKER_IMAGE}
 
 [Install]
 WantedBy=default.target
