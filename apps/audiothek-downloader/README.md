@@ -35,7 +35,7 @@ The application is now also available as a Docker build. Use the image `ghcr.io/
 
 ## Running as a `systemd` service
 
-The `*.service` and `*.timer` units can be found in the `systemd` folder. Both the storage path for podcasts and the image name and tag can be configured. The service unit expects the configuration in `~/.config/audiothek/env`. An example configuration can be found under `systemd/env.example`.
+The `*.service` and `*.timer` units can be found in the `systemd` folder. Both the storage path for podcasts and the image name and tag can be configured. The service unit expects the configuration in `~/.config/codescape/audiothek-downloader/env`. An example configuration can be found under `systemd/env.example`.
 
 A script `install-systemd.sh` is availble in the `scripts` directory. This should be executed from the **root dir** of the repository.
 
