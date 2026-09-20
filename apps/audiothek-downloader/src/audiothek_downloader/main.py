@@ -15,11 +15,16 @@ import typer
 from jsonpath_ng import parse as jp_parse
 from requests.adapters import HTTPAdapter
 from rich.console import Console
+from telemetry.client import TelemetryClient
 from urllib3.util.retry import Retry
 
 app = typer.Typer(add_completion=False)
 console = Console()
 error_console = Console(stderr=True)
+
+TELEMETRY_API = os.getenv("TELEMETRY_API_URL", "http://localhost:8000")
+
+SERVICE_NAME = "audiothek-downloader"
 
 PODCAST_TEMPLATE = "https://api.ardaudiothek.de/programsets/{podcast_urn}"
 EPISODE_QUERY = jp_parse("$.data.programSet.items.nodes[*]")
@@ -176,19 +181,31 @@ def process_podcast(
 
 def run(application_data_dir: Path, podcast_storage_dir: Path) -> None:
     """Run the downloader using explicit application and storage directories."""
-    metadata_path, manifest_path = get_service_file_paths(application_data_dir)
-    if not metadata_path.exists():
-        raise FileNotFoundError(f"No metadata file found at {metadata_path}")
 
-    with metadata_path.open(encoding="utf-8") as file:
-        podcast_metadata = cast("PodcastMetadata", json.load(file))
+    with TelemetryClient(TELEMETRY_API, service_name=SERVICE_NAME) as telemetry:
+        metadata_path, manifest_path = get_service_file_paths(application_data_dir)
+        if not metadata_path.exists():
+            raise FileNotFoundError(f"No metadata file found at {metadata_path}")
 
-    for urn, metadata in podcast_metadata.items():
-        target_dir = metadata.get("target_dir")
-        if not target_dir:
-            error_console.print(f"Skipping {urn}: metadata has no target_dir")
-            continue
-        process_podcast(urn, podcast_storage_dir / target_dir, manifest_path)
+        with metadata_path.open(encoding="utf-8") as file:
+            podcast_metadata = cast("PodcastMetadata", json.load(file))
+
+        success = 0
+        skipped = 0
+        for urn, metadata in podcast_metadata.items():
+            target_dir = metadata.get("target_dir")
+            if not target_dir:
+                error_console.print(f"Skipping {urn}: metadata has no target_dir")
+                skipped += 1
+                continue
+            process_podcast(urn, podcast_storage_dir / target_dir, manifest_path)
+            success += 1
+
+        telemetry.set_metric("success_count", success)
+        telemetry.set_metric("skipped_count", skipped)
+
+        # TODO: add meaningful log message summary
+        # telemetry.set_logs_summary("")
 
 
 @app.command()
