@@ -14,6 +14,14 @@ members = [
 ]
 
 [[package]]
+name = "achterhus-telemetry-client"
+version = "0.1.0"
+source = { git = "https://github.com/marvey11/achterhus-telemetry-client.git?tag=v0.1.0#40153d15f726e0515d05e86b95f0c2495eec53f0" }
+dependencies = [
+    { name = "requests" },
+]
+
+[[package]]
 name = "annotated-doc"
 version = "0.0.5"
 source = { registry = "https://pypi.org/simple" }
@@ -91,6 +99,7 @@ name = "audiothek-downloader"
 version = "0.1.0"
 source = { editable = "apps/audiothek-downloader" }
 dependencies = [
+    { name = "achterhus-telemetry-client" },
     { name = "jsonpath-ng" },
     { name = "requests" },
     { name = "rich" },
@@ -104,6 +113,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "achterhus-telemetry-client", git = "https://github.com/marvey11/achterhus-telemetry-client.git?tag=v0.1.0" },
     { name = "jsonpath-ng", specifier = ">=1.8.0" },
     { name = "requests", specifier = ">=2.34.2" },
     { name = "rich", specifier = ">=15.0.0" },
