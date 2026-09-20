@@ -25,7 +25,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --no-dev \
     --no-editable \
     --no-install-workspace \
-    --package photo-router
+    --package audiothek-downloader
 
 # Copy full source code for workspace packages
 COPY apps/audiothek-downloader/src ./apps/audiothek-downloader/src
