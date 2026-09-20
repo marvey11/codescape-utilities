@@ -12,7 +12,7 @@ ExecStartPre=/usr/bin/docker pull ${DOCKER_IMAGE}
 ExecStart=/usr/bin/docker run --rm \
     --network ${DOCKER_NETWORK} \
     -e TELEMETRY_API_URL=${TELEMETRY_API_URL} \
-    -v %h/.codescape/audiothek-downloader:/data:rw \
+    -v %h/.local/share/codescape/audiothek-downloader:/data:rw \
     -v ${PODCAST_STORAGE_DIR}:/podcasts:rw \
     ${DOCKER_IMAGE}
 
