@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -15,8 +15,8 @@ members = [
 
 [[package]]
 name = "achterhus-telemetry-client"
-version = "0.1.0"
-source = { git = "https://github.com/marvey11/achterhus-telemetry-client.git?tag=v0.1.0#40153d15f726e0515d05e86b95f0c2495eec53f0" }
+version = "0.2.0"
+source = { git = "https://github.com/marvey11/achterhus-telemetry-client.git?tag=v0.2.0#ac96a6e9e91c1e6d6df1358c77b7ff0b3d8aaf3f" }
 dependencies = [
     { name = "requests" },
 ]
@@ -113,7 +113,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "achterhus-telemetry-client", git = "https://github.com/marvey11/achterhus-telemetry-client.git?tag=v0.1.0" },
+    { name = "achterhus-telemetry-client", git = "https://github.com/marvey11/achterhus-telemetry-client.git?tag=v0.2.0" },
     { name = "jsonpath-ng", specifier = ">=1.8.0" },
     { name = "requests", specifier = ">=2.34.2" },
     { name = "rich", specifier = ">=15.0.0" },
