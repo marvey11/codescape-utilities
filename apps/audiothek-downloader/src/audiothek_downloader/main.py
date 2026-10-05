@@ -6,6 +6,7 @@ import json
 import os
 import re
 import tempfile
+from contextlib import nullcontext
 from datetime import datetime
 from pathlib import Path  # noqa: TC003
 from typing import Annotated, cast
@@ -181,8 +182,12 @@ def process_podcast(
 
 def run(application_data_dir: Path, podcast_storage_dir: Path) -> None:
     """Run the downloader using explicit application and storage directories."""
-
-    with TelemetryClient(TELEMETRY_API, service_name=SERVICE_NAME) as telemetry:
+    telemetry_context = (
+        TelemetryClient(TELEMETRY_API, service_name=SERVICE_NAME)
+        if os.getenv("SERVICE_RUN_ID")
+        else nullcontext(None)
+    )
+    with telemetry_context as telemetry:
         metadata_path, manifest_path = get_service_file_paths(application_data_dir)
         if not metadata_path.exists():
             raise FileNotFoundError(f"No metadata file found at {metadata_path}")
@@ -201,8 +206,9 @@ def run(application_data_dir: Path, podcast_storage_dir: Path) -> None:
             process_podcast(urn, podcast_storage_dir / target_dir, manifest_path)
             success += 1
 
-        telemetry.set_metric("success_count", success)
-        telemetry.set_metric("skipped_count", skipped)
+        if telemetry is not None:
+            telemetry.set_metric("success_count", success)
+            telemetry.set_metric("skipped_count", skipped)
 
         # TODO: add meaningful log message summary
         # telemetry.set_logs_summary("")

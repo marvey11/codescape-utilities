@@ -1,9 +1,13 @@
+from importlib import import_module
 from pathlib import Path
+from typing import Self
 
+import pytest
 from audiothek_downloader.main import app, get_safe_filename, get_service_file_paths
 from typer.testing import CliRunner
 
 runner = CliRunner()
+downloader = import_module("audiothek_downloader.main")
 
 
 def test_get_safe_filename() -> None:
@@ -33,3 +37,46 @@ def test_cli_requires_explicit_directories(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "No metadata file found" in result.output
+
+
+def test_run_reports_metrics_with_orchestrator_run_id(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class FakeTelemetryClient:
+        def __init__(self, api_url: str, service_name: str) -> None:
+            assert api_url == downloader.TELEMETRY_API
+            assert service_name == downloader.SERVICE_NAME
+            self.metrics: dict[str, int] = {}
+
+        def __enter__(self) -> Self:
+            return self
+
+        def __exit__(self, *_: object) -> None:
+            return None
+
+        def set_metric(self, key: str, value: int) -> None:
+            self.metrics[key] = value
+
+    telemetry = FakeTelemetryClient(downloader.TELEMETRY_API, downloader.SERVICE_NAME)
+    monkeypatch.setenv("SERVICE_RUN_ID", "8d4b64d8-7e28-42f8-8cb8-3b4d202d3d83")
+    monkeypatch.setattr(
+        downloader, "TelemetryClient", lambda *_args, **_kwargs: telemetry
+    )
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "metadata.json").write_text("{}", encoding="utf-8")
+
+    downloader.run(data_dir, tmp_path / "podcasts")
+
+    assert telemetry.metrics == {"success_count": 0, "skipped_count": 0}
+
+
+def test_run_without_orchestrator_run_id_skips_telemetry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("SERVICE_RUN_ID", raising=False)
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "metadata.json").write_text("{}", encoding="utf-8")
+
+    downloader.run(data_dir, tmp_path / "podcasts")
