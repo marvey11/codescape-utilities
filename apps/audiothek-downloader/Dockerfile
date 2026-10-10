@@ -17,6 +17,8 @@ WORKDIR /app
 # Copy lockfile and package manifests
 COPY pyproject.toml uv.lock ./
 COPY apps/audiothek-downloader/pyproject.toml apps/audiothek-downloader/README.md ./apps/audiothek-downloader/
+COPY libs/core/pyproject.toml libs/core/README.md ./libs/core/
+COPY libs/core/src ./libs/core/src
 
 # Pre-install third-party & Git dependencies (cached unless uv.lock / pyproject.toml changes)
 RUN --mount=type=cache,target=/root/.cache/uv \

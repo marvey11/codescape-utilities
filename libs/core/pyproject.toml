@@ -1,13 +1,16 @@
 [project]
 name = "core"
 version = "0.1.0"
-description = "Add your description here"
+description = "Core library for the Codescape Utilities"
 readme = "README.md"
 authors = [
-    { name = "Marco Wegner", email = "673439+marvey11@users.noreply.github.com" }
+    { name = "Marco Wegner", email = "673439+marvey11@users.noreply.github.com" },
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["achterhus-telemetry-client"]
+
+[tool.uv.sources]
+achterhus-telemetry-client = { git = "https://github.com/marvey11/achterhus-telemetry-client.git", tag = "v0.2.0" }
 
 [build-system]
 requires = ["hatchling"]

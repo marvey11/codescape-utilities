@@ -6,7 +6,6 @@ import json
 import os
 import re
 import tempfile
-from contextlib import nullcontext
 from datetime import datetime
 from pathlib import Path  # noqa: TC003
 from typing import Annotated, cast
@@ -16,14 +15,13 @@ import typer
 from jsonpath_ng import parse as jp_parse
 from requests.adapters import HTTPAdapter
 from rich.console import Console
-from telemetry.client import TelemetryClient
 from urllib3.util.retry import Retry
+
+from core.telemetry import telemetry_context
 
 app = typer.Typer(add_completion=False)
 console = Console()
 error_console = Console(stderr=True)
-
-TELEMETRY_API = os.getenv("TELEMETRY_API_URL", "http://localhost:8000")
 
 SERVICE_NAME = "audiothek-downloader"
 
@@ -182,12 +180,7 @@ def process_podcast(
 
 def run(application_data_dir: Path, podcast_storage_dir: Path) -> None:
     """Run the downloader using explicit application and storage directories."""
-    telemetry_context = (
-        TelemetryClient(TELEMETRY_API, service_name=SERVICE_NAME)
-        if os.getenv("SERVICE_RUN_ID")
-        else nullcontext(None)
-    )
-    with telemetry_context as telemetry:
+    with telemetry_context(SERVICE_NAME) as telemetry:
         metadata_path, manifest_path = get_service_file_paths(application_data_dir)
         if not metadata_path.exists():
             raise FileNotFoundError(f"No metadata file found at {metadata_path}")

@@ -8,7 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "achterhus-telemetry-client",
+    "core",
     "jsonpath-ng>=1.8.0",
     "requests>=2.34.2",
     "rich>=15.0.0",
@@ -23,7 +23,7 @@ build-backend = "hatchling.build"
 dev = ["types-requests>=2.33.0.20260906"]
 
 [tool.uv.sources]
-achterhus-telemetry-client = { git = "https://github.com/marvey11/achterhus-telemetry-client.git", tag = "v0.2.0" }
+core = { workspace = true }
 
 [project.scripts]
 audiothek-downloader = "audiothek_downloader.main:app"

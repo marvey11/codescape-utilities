@@ -15,6 +15,7 @@ dev = [
     "pre-commit>=4.6.2",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
+    "pytest-mock>=3.16.0",
     "ruff>=0.16.4",
 ]
 
@@ -55,7 +56,7 @@ suppress-none-returning = false # Requires explicit -> None return types
 "**/tests/**/*.py" = ["S101"]
 
 [tool.ruff.lint.isort]
-# known-first-party = ["sample_lib", "sample_app"]
+known-first-party = ["audiothek_downloader", "core"]
 
 [tool.ruff.format]
 # Use "double" or "single" quotes based on your preference
@@ -105,7 +106,7 @@ ignore_missing_imports = true
 testpaths = ["apps", "libs"]
 python_files = ["test_*.py", "*_test.py"]
 python_functions = ["test_*"]
-addopts = "-ra -q --cov=apps --cov=libs --cov-report=term-missing --cov-report=xml --cov-report=html"
+addopts = "-ra -q"
 
 [tool.coverage.run]
 branch = true

@@ -69,7 +69,7 @@ It runs these commands after installing dependencies:
 uv run ruff check .
 uv run ruff format --check .
 uv run --all-packages mypy .
-uv run --all-packages pytest
+./scripts/run_coverage.sh
 ```
 
 Run the same sequence locally before submitting a change. Ruff lint checks rules
@@ -102,16 +102,17 @@ validating imports and types across all workspace packages.
 ### Tests and coverage
 
 ```sh
-uv run --all-packages pytest
+./scripts/run_coverage.sh
 uv run pytest
 uv run pytest -o addopts='' <path/to/test_file.py>
 uv run pytest -o addopts='' <path/to/test_file.py> -k <test_expression>
 ```
 
-The first command is the CI-equivalent full suite. The second is useful for normal
-local execution. The last two are focused checks that disable the repository-wide
-coverage threshold so a small test slice can be evaluated quickly. The default
-pytest configuration also writes terminal, XML, and HTML coverage reports.
+The first command is the CI-equivalent full suite. It runs tests and checks coverage. By default, it does not output any HTML or XML coverage. This can be enabled with options, though.
+
+The second is useful for normal local test execution, but doesn't check coverage. It executes in considerably less time than the commands checking coverage.
+
+The last two are focused checks that disable the repository-wide coverage threshold so a small test slice can be evaluated quickly.
 
 For the downloader CLI tests, use:
 
@@ -132,7 +133,7 @@ Markdown, EOFs, trailing whitespace, Ruff linting, and Ruff formatting. The
 pre-push stage also runs:
 
 ```sh
-uv run --all-packages pytest
+./scripts/run_coverage.sh
 ```
 
 Run pre-commit after changing Python, configuration, workflow, or lock files.
