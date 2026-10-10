@@ -22,8 +22,6 @@ app = typer.Typer(add_completion=False)
 console = Console()
 error_console = Console(stderr=True)
 
-TELEMETRY_API = os.getenv("TELEMETRY_API_URL", "http://localhost:8000")
-
 SERVICE_NAME = "audiothek-downloader"
 
 PODCAST_TEMPLATE = "https://api.ardaudiothek.de/programsets/{podcast_urn}"

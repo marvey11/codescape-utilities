@@ -56,8 +56,7 @@ def test_run_reports_metrics_with_orchestrator_run_id(
     tmp_path: Path,
 ) -> None:
     class FakeTelemetryClient:
-        def __init__(self, api_url: str, service_name: str) -> None:
-            assert api_url == downloader.TELEMETRY_API
+        def __init__(self, service_name: str) -> None:
             assert service_name == downloader.SERVICE_NAME
             self.metrics: dict[str, int] = {}
 
@@ -70,7 +69,7 @@ def test_run_reports_metrics_with_orchestrator_run_id(
         def set_metric(self, key: str, value: int) -> None:
             self.metrics[key] = value
 
-    telemetry = FakeTelemetryClient(downloader.TELEMETRY_API, downloader.SERVICE_NAME)
+    telemetry = FakeTelemetryClient(downloader.SERVICE_NAME)
 
     @contextmanager
     def telemetry_scope(_: str) -> Generator[FakeTelemetryClient, None, None]:
