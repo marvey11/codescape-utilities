@@ -1,13 +1,20 @@
+from collections.abc import Generator
+from contextlib import contextmanager, nullcontext
 from importlib import import_module
 from pathlib import Path
 from typing import Self
 
 import pytest
 from audiothek_downloader.main import app, get_safe_filename, get_service_file_paths
+from pytest_mock import MockerFixture
 from typer.testing import CliRunner
 
 runner = CliRunner()
 downloader = import_module("audiothek_downloader.main")
+
+
+def _null_context(_: str) -> nullcontext[None]:
+    return nullcontext(None)
 
 
 def test_get_safe_filename() -> None:
@@ -24,7 +31,11 @@ def test_get_service_file_paths_creates_application_data_dir(tmp_path: Path) -> 
     assert (tmp_path / "data").is_dir()
 
 
-def test_cli_requires_explicit_directories(tmp_path: Path) -> None:
+def test_cli_requires_explicit_directories(
+    mocker: MockerFixture, tmp_path: Path
+) -> None:
+    mocker.patch("audiothek_downloader.main.telemetry_context", _null_context)
+
     result = runner.invoke(
         app,
         [
@@ -40,7 +51,9 @@ def test_cli_requires_explicit_directories(tmp_path: Path) -> None:
 
 
 def test_run_reports_metrics_with_orchestrator_run_id(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch,
+    mocker: MockerFixture,
+    tmp_path: Path,
 ) -> None:
     class FakeTelemetryClient:
         def __init__(self, api_url: str, service_name: str) -> None:
@@ -58,10 +71,14 @@ def test_run_reports_metrics_with_orchestrator_run_id(
             self.metrics[key] = value
 
     telemetry = FakeTelemetryClient(downloader.TELEMETRY_API, downloader.SERVICE_NAME)
+
+    @contextmanager
+    def telemetry_scope(_: str) -> Generator[FakeTelemetryClient, None, None]:
+        yield telemetry
+
+    mocker.patch("audiothek_downloader.main.telemetry_context", telemetry_scope)
     monkeypatch.setenv("SERVICE_RUN_ID", "8d4b64d8-7e28-42f8-8cb8-3b4d202d3d83")
-    monkeypatch.setattr(
-        downloader, "TelemetryClient", lambda *_args, **_kwargs: telemetry
-    )
+
     data_dir = tmp_path / "data"
     data_dir.mkdir()
     (data_dir / "metadata.json").write_text("{}", encoding="utf-8")
@@ -72,9 +89,10 @@ def test_run_reports_metrics_with_orchestrator_run_id(
 
 
 def test_run_without_orchestrator_run_id_skips_telemetry(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     monkeypatch.delenv("SERVICE_RUN_ID", raising=False)
+
     data_dir = tmp_path / "data"
     data_dir.mkdir()
     (data_dir / "metadata.json").write_text("{}", encoding="utf-8")
