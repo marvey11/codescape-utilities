@@ -13,7 +13,6 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/audiothek-downloader
 
 jobs:
   code-quality:
@@ -41,11 +40,14 @@ jobs:
         run: uv run --all-packages mypy .
 
       - name: Run Test Suite
-        run: uv run --all-packages pytest
+        run: ./scripts/run_coverage.sh
 
   docker-build-and-push:
     runs-on: ubuntu-latest
     needs: code-quality
+    strategy:
+      matrix:
+        app: [audiothek-downloader]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -65,7 +67,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.app }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=sha,prefix=
@@ -77,10 +79,10 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: apps/audiothek-downloader/Dockerfile
+          file: apps/${{ matrix.app }}/Dockerfile
           # Push images for main and version tag pushes, but not pull requests.
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,scope=${{ matrix.app }},mode=max
