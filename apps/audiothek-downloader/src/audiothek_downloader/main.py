@@ -12,11 +12,12 @@ from typing import Annotated, cast
 
 import requests
 import typer
-from core.telemetry import telemetry_context
 from jsonpath_ng import parse as jp_parse
 from requests.adapters import HTTPAdapter
 from rich.console import Console
 from urllib3.util.retry import Retry
+
+from core.telemetry import telemetry_context
 
 app = typer.Typer(add_completion=False)
 console = Console()

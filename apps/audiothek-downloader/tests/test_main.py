@@ -5,9 +5,10 @@ from pathlib import Path
 from typing import Self
 
 import pytest
-from audiothek_downloader.main import app, get_safe_filename, get_service_file_paths
 from pytest_mock import MockerFixture
 from typer.testing import CliRunner
+
+from audiothek_downloader.main import app, get_safe_filename, get_service_file_paths
 
 runner = CliRunner()
 downloader = import_module("audiothek_downloader.main")
