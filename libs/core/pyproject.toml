@@ -10,7 +10,7 @@ requires-python = ">=3.12"
 dependencies = ["achterhus-telemetry-client"]
 
 [tool.uv.sources]
-achterhus-telemetry-client = { git = "https://github.com/marvey11/achterhus-telemetry-client.git", tag = "v0.2.0" }
+achterhus-telemetry-client = { git = "https://github.com/marvey11/achterhus-telemetry-client.git", tag = "v0.2.1" }
 
 [build-system]
 requires = ["hatchling"]
