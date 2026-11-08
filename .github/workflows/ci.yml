@@ -73,10 +73,21 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.app }}
           tags: |
+            # Main branch: continuously updated development image.
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+            # Commit SHA.
             type=sha,prefix=
+
             # App versions use tags such as audiothek-downloader-v1.2.3.
-            type=match,pattern=${{ matrix.app }}-v(.*),group=1,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            # Generate exact, minor and major version tags.
+            type=semver,pattern={{version}},value=${{ github.ref_name }},match=${{ matrix.app }}-v(.*),enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.ref_name }},match=${{ matrix.app }}-v(.*),enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=semver,pattern={{major}},value=${{ github.ref_name }},match=${{ matrix.app }}-v(.*),enable=${{ startsWith(github.ref, 'refs/tags/') }}
+
+          # Prevent automatic latest generation on version-tag pushes.
+          flavor: |
+            latest=false
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
