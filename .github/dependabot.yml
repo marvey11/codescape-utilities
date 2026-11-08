@@ -1,13 +1,12 @@
 version: 2
 updates:
   - package-ecosystem: "uv"
-    directory: "/"
+    directory: "/apps/audiothek-downloader"
     schedule:
       interval: "weekly"
     ignore:
-      # Exclude local workspace packages from external dependency updates
+      # The local shared library is maintained in this repository.
       - dependency-name: "core"
-      - dependency-name: "runner"
 
     groups:
       dev-dependencies:

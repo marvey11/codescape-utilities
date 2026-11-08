@@ -1,9 +1,4 @@
 repos:
-  - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.13.0
-    hooks:
-      - id: uv-lock
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -36,15 +31,21 @@ repos:
 
   - repo: local
     hooks:
+      - id: uv-locks
+        name: uv locks
+        entry: ./scripts/check_locks.sh
+        language: system
+        pass_filenames: false
+
       - id: mypy
         name: mypy
-        entry: uv run --all-packages mypy .
+        entry: uv run --project apps/audiothek-downloader mypy .
         language: system
         pass_filenames: false
 
       - id: pyright
         name: pyright
-        entry: uv run pyright
+        entry: uv run --project apps/audiothek-downloader pyright
         language: system
         pass_filenames: false
 

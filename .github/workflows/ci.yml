@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
-    tags: ["v*.*.*"]
+    tags: ["audiothek-downloader-v*"]
   pull_request:
     branches: [main]
 
@@ -24,23 +24,24 @@ jobs:
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "latest"
-          python-version: "3.12"
+          python-version: "3.14"
           enable-cache: true
+          cache-dependency-glob: "apps/*/uv.lock"
 
       - name: Install dependencies
-        run: uv sync --locked --all-packages --all-extras --dev
+        run: uv sync --locked --all-extras --dev --project apps/audiothek-downloader
 
       - name: Run Ruff Lint Check
-        run: uv run ruff check .
+        run: uv run --project apps/audiothek-downloader ruff check .
 
       - name: Run Ruff Format Check
-        run: uv run ruff format --check .
+        run: uv run --project apps/audiothek-downloader ruff format --check .
 
       - name: MyPy Type-checking
-        run: uv run --all-packages mypy .
+        run: uv run --project apps/audiothek-downloader mypy .
 
       - name: Pyright Type-checking
-        run: uv run pyright
+        run: uv run --project apps/audiothek-downloader pyright
 
       - name: Run Test Suite
         run: ./scripts/run_coverage.sh
@@ -74,9 +75,8 @@ jobs:
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=sha,prefix=
-            # Tags based on Git tags (e.g., v1.2.3 -> 1.2.3, 1.2, 1)
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            # App versions use tags such as audiothek-downloader-v1.2.3.
+            type=match,pattern=${{ matrix.app }}-v(.*),group=1,enable=${{ startsWith(github.ref, 'refs/tags/') }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v7

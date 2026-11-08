@@ -2,26 +2,30 @@
 
 ## Repository Overview
 
-`codescape-utilities` is a Python 3.12 uv workspace for a collection of Python utilities.
-The workspace members are declared in the root `pyproject.toml`:
+`codescape-utilities` contains independent Python 3.14+ uv application projects under
+`apps`. Each application owns its `pyproject.toml` and `uv.lock`. Shared code lives
+under `libs`; applications consume shared packages as local path dependencies.
 
-- `libs/core`: shared domain models, repositories, and services.
-- `apps/audiothek-downloader`: podcast downloader tool.
+- `apps/audiothek-downloader`: downloads ARD Audiothek podcasts.
+- `libs/core`: shared worker telemetry context wrapper around the independently
+  maintained Telemetry client and API.
 
 The repository uses a `src` layout. Import packages through their installed package
 names, not by reaching into source directories with relative filesystem assumptions.
 
 ## Source Boundaries
 
-- Put reusable domain behavior in `libs/core/src/core`.
+- Keep reusable domain behavior in the appropriate package under `libs`.
+- Keep app-specific behavior under its application package.
 - Keep tests next to the package they validate, under the corresponding `tests`
   directory.
 - Preserve public service and repository APIs unless the task explicitly requires a
   contract change.
+- Shared libraries are local path dependencies; do not copy their source into apps.
 
 ## Development Conventions
 
-- Target Python 3.12 or newer.
+- Target Python 3.14 or newer.
 - Use 4 spaces and a maximum line length of 88 characters.
 - Use double-quoted strings, consistent with Ruff format configuration.
 - Add explicit annotations for functions, parameters, and return values.
@@ -39,52 +43,52 @@ names, not by reaching into source directories with relative filesystem assumpti
 
 ## Tests
 
-Tests use pytest and are discovered from `apps` and `libs` according to the root
-`pyproject.toml`.
-
-Use fixtures and monkeypatching to isolate services, repositories, filesystem paths,
-and other external state. For CLI tests, use `typer.testing.CliRunner` and assert
-exit codes plus meaningful output. Follow the existing worker test pattern when
-mocking a service factory.
+Tests use pytest. Run an app's tests and the shared library tests in that app's
+environment. Use fixtures and monkeypatching to isolate services, repositories,
+filesystem paths, and other external state. For CLI tests, use
+`typer.testing.CliRunner` and assert exit codes plus meaningful output. Follow the
+existing worker test pattern when mocking a service factory.
 
 ## Validation and Verification Commands
 
-Run commands from the repository root with uv available.
+Run commands from the repository root with uv available. Replace the project path
+with the app being worked on.
 
 ### Install and synchronize
 
 ```sh
-uv sync --locked --all-packages --all-extras --dev
+uv sync --locked --all-extras --dev --project apps/audiothek-downloader
 ```
 
-Use this before validation or when dependencies, workspace metadata, or `uv.lock`
-change. The locked form ensures the installed dependency graph matches the lockfile.
+Each app has an independent lockfile and depends on the shared `libs/core` package
+from the local checkout. Re-lock only the affected app after changing its dependencies
+or the shared package dependency metadata.
 
 ### CI checks
 
-The authoritative CI workflow is [.github/workflows/ci.yml](.github/workflows/ci.yml).
-It runs these commands after installing dependencies:
+The authoritative CI workflow is
+[.github/workflows/ci.yml](.github/workflows/ci.yml). It installs the app environment
+and runs:
 
 ```sh
-uv run ruff check .
-uv run ruff format --check .
-uv run --all-packages mypy .
-uv run pyright
+uv run --project apps/audiothek-downloader ruff check .
+uv run --project apps/audiothek-downloader ruff format --check .
+uv run --project apps/audiothek-downloader mypy .
+uv run --project apps/audiothek-downloader pyright
 ./scripts/run_coverage.sh
 ```
 
-Run the same sequence locally before submitting a change. Ruff lint checks rules
-configured in `pyproject.toml`, Ruff format check detects unformatted files, mypy
-and Pyright run type checks, and pytest runs the complete workspace suite with
-the configured coverage threshold.
+Ruff, mypy, and Pyright use the shared root configuration. The coverage script runs
+each app's tests and the shared library tests in the corresponding app environment,
+then combines coverage results.
 
 ### Formatting and linting
 
 ```sh
-uv run ruff check .
-uv run ruff check . --fix
-uv run ruff format .
-uv run ruff format --check .
+uv run --project apps/audiothek-downloader ruff check .
+uv run --project apps/audiothek-downloader ruff check . --fix
+uv run --project apps/audiothek-downloader ruff format .
+uv run --project apps/audiothek-downloader ruff format --check .
 ```
 
 Use `--fix` and `ruff format .` only when you intend to modify files. Review the
@@ -93,67 +97,45 @@ resulting diff afterward. The CI-safe commands are the non-mutating checks.
 ### Type checking
 
 ```sh
-uv run mypy .
-uv run --all-packages mypy .
-uv run pyright
+uv run --project apps/audiothek-downloader mypy .
+uv run --project apps/audiothek-downloader pyright
 ```
-
-The workspace-wide form used by CI is `uv run --all-packages mypy .`. Use it when
-validating imports and types across all workspace packages. Pyright checks the
-workspace using the repository configuration in `pyrightconfig.json`.
 
 ### Tests and coverage
 
 ```sh
 ./scripts/run_coverage.sh
-uv run pytest
-uv run pytest -o addopts='' <path/to/test_file.py>
-uv run pytest -o addopts='' <path/to/test_file.py> -k <test_expression>
-```
-
-The first command is the CI-equivalent full suite. It runs tests and checks coverage. By default, it does not output any HTML or XML coverage. This can be enabled with options, though.
-
-The second is useful for normal local test execution, but doesn't check coverage. It executes in considerably less time than the commands checking coverage.
-
-The last two are focused checks that disable the repository-wide coverage threshold so a small test slice can be evaluated quickly.
-
-For the downloader CLI tests, use:
-
-```sh
-uv run pytest -o addopts='' \
+uv run --project apps/audiothek-downloader pytest
+uv run --project apps/audiothek-downloader pytest -o addopts='' \
   apps/audiothek-downloader/tests/test_main.py
 ```
+
+The coverage script runs the complete app and shared library suites. It accepts
+`--html`, `--xml`, or `--all` to generate coverage reports. Focused test commands
+can clear repository-wide pytest options with `-o addopts=''`.
 
 ### Pre-commit verification
 
 ```sh
-uv run pre-commit run --all-files
-uv run pre-commit run --all-files --hook-stage pre-push
+uv run --project apps/audiothek-downloader pre-commit run --all-files
+uv run --project apps/audiothek-downloader pre-commit run --all-files --hook-stage pre-push
 ```
 
-The configured hooks verify the uv lockfile, large files, JSON, TOML, YAML,
-Markdown, EOFs, trailing whitespace, Ruff linting and formatting, mypy, and
-Pyright. The pre-push stage also runs:
-
-```sh
-./scripts/run_coverage.sh
-```
-
-Run pre-commit after changing Python, configuration, workflow, or lock files.
+The configured hooks verify per-app uv lockfiles, large files, JSON, TOML, YAML,
+Markdown, EOFs, trailing whitespace, Ruff linting and formatting, mypy, and Pyright.
+The pre-push stage also runs `./scripts/run_coverage.sh`. Bash scripts are checked by
+ShellCheck.
 
 ### Syntax and diagnostics
 
 ```sh
 python -m compileall apps libs
-uv run pytest --collect-only
+uv run --project apps/audiothek-downloader pytest --collect-only
 ```
 
-Use `compileall` for a quick Python syntax check and `pytest --collect-only` to
-verify test discovery without executing tests.
-
-Also check the VS Code Problems view with Pylance enabled for every changed
-Python file and resolve reported errors before submitting the change. Pylance
-diagnostics complement -- but do not replace -- the workspace-wide mypy check.
+Also check the VS Code Problems view with Pylance enabled for every changed Python
+file and resolve reported errors before submitting a change. Pylance diagnostics
+complement -- but do not replace -- the mypy check run in the app environment.
 
 ## Change Workflow
 
@@ -168,9 +150,10 @@ diagnostics complement -- but do not replace -- the workspace-wide mypy check.
 ## CI and Pull Requests
 
 Changes targeting `main` are validated by the `code-quality` job in
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) on pushes and pull requests.
-The workflow uses Python 3.12, installs with `uv sync --locked`, and requires all
-Ruff, mypy, Pyright, and pytest checks to pass.
+[.github/workflows/ci.yml](.github/workflows/ci.yml). The workflow uses Python 3.14,
+installs each app with `uv sync --locked --project`, and requires Ruff, mypy,
+Pyright, and pytest checks to pass. App release tags use the form
+`<application>-v<version>`.
 
 Do not weaken lint, type, test, or coverage settings to make a change pass. Fix the
 underlying code or add focused tests for the behavior being changed.

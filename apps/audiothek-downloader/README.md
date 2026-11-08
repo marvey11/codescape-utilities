@@ -5,10 +5,11 @@ completed downloads.
 
 ## Usage
 
-Install the workspace with `uv sync`, then run:
+From the repository root, install this application's environment and run:
 
 ```sh
-uv run --package audiothek-downloader audiothek-downloader \
+uv sync --project apps/audiothek-downloader
+uv run --project apps/audiothek-downloader audiothek-downloader \
     --application-data-dir /path/to/application-data \
     --podcast-storage-dir /path/to/podcasts
 ```
@@ -29,6 +30,13 @@ The downloader creates `manifest.json` in the application data directory and
 records each successfully downloaded episode there. Existing manifest entries
 are skipped on later runs.
 
+This app has an independent `uv.lock`; it consumes the shared `core` package from
+`libs/core` as a local dependency. Run the app's tests and tools using
+`--project apps/audiothek-downloader` from the repository root.
+
 ## Dockerised Application
 
-The application is now also available as a Docker build. Use the image `ghcr.io/marvey11/codescape-utilities/audiothek-downloader:latest`.
+The application is available as a Docker image at
+`ghcr.io/marvey11/codescape-utilities/audiothek-downloader:latest`. Versioned images
+are published from tags such as `audiothek-downloader-v1.2.3` and use the app
+version as the image tag.
