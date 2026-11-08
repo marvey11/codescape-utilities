@@ -10,13 +10,6 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.17.0
-    hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
-
   - repo: https://github.com/koalaman/shellcheck-precommit
     rev: v0.11.0
     hooks:
@@ -34,6 +27,18 @@ repos:
       - id: uv-locks
         name: uv locks
         entry: ./scripts/check_locks.sh
+        language: system
+        pass_filenames: false
+
+      - id: ruff
+        name: Ruff lint
+        entry: uv run --project apps/audiothek-downloader ruff check .
+        language: system
+        pass_filenames: false
+
+      - id: ruff-format
+        name: Ruff format check
+        entry: uv run --project apps/audiothek-downloader ruff format --check .
         language: system
         pass_filenames: false
 
