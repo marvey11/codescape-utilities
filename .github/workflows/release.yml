@@ -1,0 +1,79 @@
+name: Create GitHub Release
+
+on:
+  push:
+    tags:
+      - "audiothek-downloader-v*"
+
+permissions:
+  contents: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Validate release tag
+        id: tag
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          if [[ ! "$tag" =~ ^([A-Za-z0-9._-]+)-v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "Tag '$tag' does not match <application>-v<major>.<minor>.<patch>"
+            exit 1
+          fi
+
+          app="${tag%-v*}"
+          if [[ ! -d "apps/$app" ]]; then
+            echo "No application directory found for '$app'"
+            exit 1
+          fi
+
+          echo "app=${app}" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#${app}-v}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ steps.tag.outputs.app }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ github.ref_name }},match=${{ steps.tag.outputs.app }}-v(.*)
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.ref_name }},match=${{ steps.tag.outputs.app }}-v(.*)
+            type=semver,pattern={{major}},value=${{ github.ref_name }},match=${{ steps.tag.outputs.app }}-v(.*)
+          flavor: |
+            latest=false
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/${{ steps.tag.outputs.app }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ steps.tag.outputs.app }}
+          cache-to: type=gha,scope=${{ steps.tag.outputs.app }},mode=max
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

@@ -23,6 +23,12 @@ uv run --project apps/audiothek-downloader audiothek-downloader --help
 ```
 
 Application version tags use the form `<application>-v<version>`, for example
-`audiothek-downloader-v1.2.3`. Each image uses its application's version as its
-versioned image tag. The images expect input and destination directories to be
-mounted inside the container.
+`audiothek-downloader-v1.2.3`. The GitHub release workflow creates immutable
+Docker images for the full semantic version, plus floating aliases for the major
+and major.minor variants. The images expect input and destination directories to
+be mounted inside the container.
+
+The regular `main`-branch Docker image is published from the CI workflow and
+updated continuously as the branch advances. Release tags are handled separately
+in the release workflow so only the tagged application’s image is built and
+published.

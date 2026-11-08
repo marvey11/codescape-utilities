@@ -70,6 +70,12 @@ The authoritative CI workflow is
 [.github/workflows/ci.yml](.github/workflows/ci.yml). It installs the app environment
 and runs:
 
+Release tags are handled by
+[.github/workflows/release.yml](.github/workflows/release.yml). Git tag names use
+`<application>-v<major>.<minor>.<patch>` and trigger a single app image build for
+that application only. The release workflow publishes immutable version tags such
+as `1.2.8`, plus floating aliases such as `1.2` and `1`.
+
 ```sh
 uv run --project apps/audiothek-downloader ruff check .
 uv run --project apps/audiothek-downloader ruff format --check .
