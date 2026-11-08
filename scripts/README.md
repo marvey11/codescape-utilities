@@ -1,5 +1,8 @@
 # Utility Scripts
 
-This folder contains the following scripts:
+Run scripts from the repository root.
 
-* `run_coverage.sh` -- runs tests and checks coverage; can optionally write XML and/or HTML output (off by default)
+- `check_locks.sh` verifies that every app lockfile matches its project manifest.
+- `run_coverage.sh` runs each app test suite together with `libs/core` tests in
+  that app's uv environment, then combines coverage. Pass `--html`, `--xml`, or
+  `--all` to generate reports.

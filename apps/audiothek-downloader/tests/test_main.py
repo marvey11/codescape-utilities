@@ -1,14 +1,19 @@
-from collections.abc import Generator
+from __future__ import annotations
+
 from contextlib import contextmanager, nullcontext
 from importlib import import_module
-from pathlib import Path
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
-import pytest
-from pytest_mock import MockerFixture
 from typer.testing import CliRunner
 
 from audiothek_downloader.main import app, get_safe_filename, get_service_file_paths
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+    from pathlib import Path
+
+    import pytest
+    from pytest_mock import MockerFixture
 
 runner = CliRunner()
 downloader = import_module("audiothek_downloader.main")
@@ -73,7 +78,7 @@ def test_run_reports_metrics_with_orchestrator_run_id(
     telemetry = FakeTelemetryClient(downloader.SERVICE_NAME)
 
     @contextmanager
-    def telemetry_scope(_: str) -> Generator[FakeTelemetryClient, None, None]:
+    def telemetry_scope(_: str) -> Generator[FakeTelemetryClient]:
         yield telemetry
 
     mocker.patch("audiothek_downloader.main.telemetry_context", telemetry_scope)
