@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-08
+
 ### Added
 
-- Add `audiothek-downloader` ([535d2f0](https://github.com/marvey11/codescape-utilities/commit/535d2f0d5137f8a094caa56cf6a3ccf8cf02e62c), [158deb4](https://github.com/marvey11/codescape-utilities/commit/158deb49c46a86c964937172f9cf5763fa69dd29))
+- Add initial `audiothek-downloader` app.
