@@ -15,6 +15,11 @@ env:
 jobs:
   code-quality:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        app: [audiothek-downloader]
+
     steps:
       - uses: actions/checkout@v7
 
@@ -27,19 +32,19 @@ jobs:
           cache-dependency-glob: "apps/*/uv.lock"
 
       - name: Install dependencies
-        run: uv sync --locked --all-extras --dev --project apps/audiothek-downloader
+        run: uv sync --locked --all-extras --dev --project apps/${{ matrix.app }}
 
       - name: Run Ruff Lint Check
-        run: uv run --project apps/audiothek-downloader ruff check .
+        run: uv run --project apps/${{ matrix.app }} ruff check .
 
       - name: Run Ruff Format Check
-        run: uv run --project apps/audiothek-downloader ruff format --check .
+        run: uv run --project apps/${{ matrix.app }} ruff format --check .
 
       - name: MyPy Type-checking
-        run: uv run --project apps/audiothek-downloader mypy .
+        run: uv run --project apps/${{ matrix.app }} mypy .
 
       - name: Pyright Type-checking
-        run: uv run --project apps/audiothek-downloader pyright
+        run: uv run --project apps/${{ matrix.app }} pyright
 
       - name: Run Test Suite
         run: ./scripts/run_coverage.sh
