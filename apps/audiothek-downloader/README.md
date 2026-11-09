@@ -30,6 +30,11 @@ The downloader creates `manifest.json` in the application data directory and
 records each successfully downloaded episode there. Existing manifest entries
 are skipped on later runs.
 
+When telemetry is enabled, the worker reports `success_count` and `skipped_count`
+for podcast metadata entries, plus `downloaded_count` for episode files newly
+downloaded and recorded in the manifest during that run. Existing episodes and
+failed downloads are not included.
+
 This app has an independent `uv.lock`; it consumes the shared `core` package from
 `libs/core` as a local dependency. Run the app's tests and tools using
 `--project apps/audiothek-downloader` from the repository root.

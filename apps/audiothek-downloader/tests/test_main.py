@@ -235,8 +235,11 @@ def test_process_podcast_downloads_new_episodes_and_updates_manifest(
     )
     download_dir = tmp_path / "podcasts" / "show"
 
-    downloader.process_podcast("podcast-1", download_dir, manifest_path)
+    downloaded_count = downloader.process_podcast(
+        "podcast-1", download_dir, manifest_path
+    )
 
+    assert downloaded_count == 2
     response.raise_for_status.assert_called_once_with()
     assert response.encoding == "utf-8"
     assert downloads.call_count == 2
@@ -276,8 +279,11 @@ def test_process_podcast_continues_after_download_request_error(
     )
     manifest_path = tmp_path / "manifest.json"
 
-    downloader.process_podcast("podcast-1", tmp_path / "podcasts", manifest_path)
+    downloaded_count = downloader.process_podcast(
+        "podcast-1", tmp_path / "podcasts", manifest_path
+    )
 
+    assert downloaded_count == 0
     assert not manifest_path.exists()
 
 
@@ -354,7 +360,11 @@ def test_run_reports_metrics_with_orchestrator_run_id(
 
     downloader.run(data_dir, tmp_path / "podcasts")
 
-    assert telemetry.metrics == {"success_count": 0, "skipped_count": 0}
+    assert telemetry.metrics == {
+        "success_count": 0,
+        "skipped_count": 0,
+        "downloaded_count": 0,
+    }
 
 
 def test_run_counts_processed_and_skipped_podcasts(
@@ -374,7 +384,9 @@ def test_run_counts_processed_and_skipped_podcasts(
         yield telemetry
 
     mocker.patch("audiothek_downloader.main.telemetry_context", telemetry_scope)
-    process = mocker.patch("audiothek_downloader.main.process_podcast")
+    process = mocker.patch(
+        "audiothek_downloader.main.process_podcast", side_effect=[2, 3]
+    )
     data_dir = tmp_path / "data"
     data_dir.mkdir()
     (data_dir / "metadata.json").write_text(
@@ -391,7 +403,44 @@ def test_run_counts_processed_and_skipped_podcasts(
         tmp_path / "podcasts" / "shows" / "one",
         data_dir / "manifest.json",
     )
-    assert telemetry.metrics == {"success_count": 2, "skipped_count": 1}
+    assert telemetry.metrics == {
+        "success_count": 2,
+        "skipped_count": 1,
+        "downloaded_count": 5,
+    }
+
+
+def test_run_does_not_report_metrics_when_processing_fails(
+    mocker: MockerFixture, tmp_path: Path
+) -> None:
+    class FakeTelemetryClient:
+        def __init__(self) -> None:
+            self.metrics: dict[str, int] = {}
+
+        def set_metric(self, key: str, value: int) -> None:
+            self.metrics[key] = value
+
+    telemetry = FakeTelemetryClient()
+
+    @contextmanager
+    def telemetry_scope(_: str) -> Generator[FakeTelemetryClient]:
+        yield telemetry
+
+    mocker.patch("audiothek_downloader.main.telemetry_context", telemetry_scope)
+    mocker.patch(
+        "audiothek_downloader.main.process_podcast",
+        side_effect=OSError("manifest write failed"),
+    )
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "metadata.json").write_text(
+        '{"show": {"target_dir": "show"}}', encoding="utf-8"
+    )
+
+    with pytest.raises(OSError, match="manifest write failed"):
+        downloader.run(data_dir, tmp_path / "podcasts")
+
+    assert telemetry.metrics == {}
 
 
 def test_run_without_orchestrator_run_id_skips_telemetry(
