@@ -26,7 +26,7 @@ repos:
     hooks:
       - id: uv-locks
         name: uv locks
-        entry: ./scripts/check_locks.sh
+        entry: ./scripts/check-locks.sh
         language: system
         pass_filenames: false
 
@@ -57,7 +57,7 @@ repos:
       # Run test suite across workspace before push
       - id: pytest
         name: pytest
-        entry: ./scripts/run_coverage.sh
+        entry: ./scripts/run-coverage.sh
         language: system
         pass_filenames: false
         stages: [pre-push]

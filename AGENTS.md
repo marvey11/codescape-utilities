@@ -81,7 +81,7 @@ uv run --project apps/audiothek-downloader ruff check .
 uv run --project apps/audiothek-downloader ruff format --check .
 uv run --project apps/audiothek-downloader mypy .
 uv run --project apps/audiothek-downloader pyright
-./scripts/run_coverage.sh
+./scripts/run-coverage.sh
 ```
 
 Ruff, mypy, and Pyright use the shared root configuration. The coverage script runs
@@ -110,7 +110,7 @@ uv run --project apps/audiothek-downloader pyright
 ### Tests and coverage
 
 ```sh
-./scripts/run_coverage.sh
+./scripts/run-coverage.sh
 uv run --project apps/audiothek-downloader pytest
 uv run --project apps/audiothek-downloader pytest -o addopts='' \
   apps/audiothek-downloader/tests/test_main.py
@@ -129,7 +129,7 @@ uv run --project apps/audiothek-downloader pre-commit run --all-files --hook-sta
 
 The configured hooks verify per-app uv lockfiles, large files, JSON, TOML, YAML,
 Markdown, EOFs, trailing whitespace, Ruff linting and formatting, mypy, and Pyright.
-The pre-push stage also runs `./scripts/run_coverage.sh`. Bash scripts are checked by
+The pre-push stage also runs `./scripts/run-coverage.sh`. Bash scripts are checked by
 ShellCheck.
 
 ### Syntax and diagnostics

@@ -47,7 +47,7 @@ jobs:
         run: uv run --project apps/${{ matrix.app }} pyright
 
       - name: Run Test Suite
-        run: ./scripts/run_coverage.sh
+        run: ./scripts/run-coverage.sh
 
   docker-build-and-push:
     if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
