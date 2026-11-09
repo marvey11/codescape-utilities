@@ -135,9 +135,9 @@ uv run --project apps/audiothek-downloader pre-commit run --all-files --hook-sta
 ```
 
 The configured hooks verify per-app uv lockfiles, large files, JSON, TOML, YAML,
-Markdown, EOFs, trailing whitespace, Ruff linting and formatting, mypy, and Pyright.
-The pre-push stage also runs `./scripts/run-coverage.sh`. Bash scripts are checked by
-ShellCheck.
+Markdown, GitHub Actions workflows, EOFs, trailing whitespace, Ruff linting and
+formatting, mypy, and Pyright. The pre-push stage also runs
+`./scripts/run-coverage.sh`. Bash scripts are checked by ShellCheck.
 
 ### Syntax and diagnostics
 

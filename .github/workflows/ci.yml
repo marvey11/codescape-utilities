@@ -49,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: ${{ fromJson(needs.discover-apps.outputs.matrix) }}
+        app: ${{ fromJson(needs.discover-apps.outputs.matrix).app }}
 
     steps:
       - uses: actions/checkout@v7
@@ -111,6 +111,13 @@ jobs:
             uv sync --locked --all-extras --dev --project "apps/$app"
           done < <(jq -r '.app[]' <<< "$APP_MATRIX")
 
+      - name: Lint GitHub Actions workflows
+        env:
+          APP_MATRIX: ${{ needs.discover-apps.outputs.matrix }}
+        run: |
+          app=$(jq -r '.app[0]' <<< "$APP_MATRIX")
+          uv run --project "apps/$app" pre-commit run actionlint --all-files
+
       - name: Run full test suite and coverage
         run: ./scripts/run-coverage.sh
 
@@ -126,7 +133,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: ${{ fromJson(needs.discover-apps.outputs.matrix) }}
+        app: ${{ fromJson(needs.discover-apps.outputs.matrix).app }}
 
     concurrency:
       group: docker-${{ matrix.app }}-${{ github.ref }}
