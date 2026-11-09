@@ -52,10 +52,12 @@ jobs:
             exit 1
           fi
 
-          echo "app=${app}" >> "$GITHUB_OUTPUT"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
-          echo "major_minor=${major}.${minor}" >> "$GITHUB_OUTPUT"
-          echo "major=${major}" >> "$GITHUB_OUTPUT"
+          {
+            echo "app=${app}"
+            echo "version=${version}"
+            echo "major_minor=${major}.${minor}"
+            echo "major=${major}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
