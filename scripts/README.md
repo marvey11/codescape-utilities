@@ -11,4 +11,4 @@ Run scripts from the repository root.
   shared library. Pass an app directory name to check only that application.
 - `run-coverage.sh` runs each app test suite together with `libs/core` tests in
   that app's uv environment, then combines coverage. Pass `--html`, `--xml`, or
-  `--all` to generate reports.
+  `--all` to generate reports. The combined report must meet the 80% minimum.

@@ -57,7 +57,7 @@ done
 COVERAGE_FILE="$coverage_dir/.coverage" \
   uv run --project "${app_projects[0]}" coverage combine --keep "$coverage_dir"
 COVERAGE_FILE="$coverage_dir/.coverage" \
-  uv run --project "${app_projects[0]}" coverage report
+  uv run --project "${app_projects[0]}" coverage report --fail-under=80
 
 if [[ "$report_html" == true ]]; then
   COVERAGE_FILE="$coverage_dir/.coverage" \
