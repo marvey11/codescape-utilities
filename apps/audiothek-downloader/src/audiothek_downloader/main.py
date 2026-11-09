@@ -122,14 +122,15 @@ def process_podcast(
     podcast_urn: str,
     download_dir: Path,
     manifest_path: Path,
-) -> None:
-    """Fetch and download new episodes for one podcast."""
+) -> int:
+    """Fetch new episodes for one podcast and return the downloaded count."""
     download_dir.mkdir(exist_ok=True, parents=True)
     manifest: EpisodeManifest = {}
     if manifest_path.exists():
         with manifest_path.open(encoding="utf-8") as file:
             manifest = cast("EpisodeManifest", json.load(file))
     episodes = manifest.setdefault(podcast_urn, {})
+    downloaded_count = 0
 
     with requests.Session() as session:
         adapter = HTTPAdapter(max_retries=retry_strategy)
@@ -176,6 +177,9 @@ def process_podcast(
                 "downloaded_at": datetime.now().isoformat(),
             }
             atomic_write_json(manifest_path, manifest)
+            downloaded_count += 1
+
+    return downloaded_count
 
 
 def run(application_data_dir: Path, podcast_storage_dir: Path) -> None:
@@ -190,18 +194,22 @@ def run(application_data_dir: Path, podcast_storage_dir: Path) -> None:
 
         success = 0
         skipped = 0
+        downloaded_count = 0
         for urn, metadata in podcast_metadata.items():
             target_dir = metadata.get("target_dir")
             if not target_dir:
                 error_console.print(f"Skipping {urn}: metadata has no target_dir")
                 skipped += 1
                 continue
-            process_podcast(urn, podcast_storage_dir / target_dir, manifest_path)
+            downloaded_count += process_podcast(
+                urn, podcast_storage_dir / target_dir, manifest_path
+            )
             success += 1
 
         if telemetry is not None:
             telemetry.set_metric("success_count", success)
             telemetry.set_metric("skipped_count", skipped)
+            telemetry.set_metric("downloaded_count", downloaded_count)
 
         # TODO: add meaningful log message summary
         # telemetry.set_logs_summary("")
