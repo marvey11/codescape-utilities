@@ -68,7 +68,9 @@ or the shared package dependency metadata.
 
 The authoritative CI workflow is
 [.github/workflows/ci.yml](.github/workflows/ci.yml). It installs the app environment
-and runs:
+and runs Ruff lint/format and the app-specific mypy and Pyright checks. The workflow
+discovers applications from `apps/*/pyproject.toml`; its coverage job runs the full
+test suite once across all apps and the shared library.
 
 Release tags are handled by
 [.github/workflows/release.yml](.github/workflows/release.yml). Git tag names use
@@ -77,16 +79,21 @@ that application only. The release workflow publishes immutable version tags suc
 as `1.2.8`, plus floating aliases such as `1.2` and `1`.
 
 ```sh
+./scripts/check-locks.sh
+./scripts/run-mypy.sh
+./scripts/run-pyright.sh
+./scripts/run-coverage.sh
 uv run --project apps/audiothek-downloader ruff check .
 uv run --project apps/audiothek-downloader ruff format --check .
 uv run --project apps/audiothek-downloader mypy .
 uv run --project apps/audiothek-downloader pyright
-./scripts/run_coverage.sh
 ```
 
 Ruff, mypy, and Pyright use the shared root configuration. The coverage script runs
 each app's tests and the shared library tests in the corresponding app environment,
 then combines coverage results.
+The lock and type-check scripts accept an optional app directory name to run a
+targeted check; without one, they discover all app projects.
 
 ### Formatting and linting
 
@@ -110,7 +117,7 @@ uv run --project apps/audiothek-downloader pyright
 ### Tests and coverage
 
 ```sh
-./scripts/run_coverage.sh
+./scripts/run-coverage.sh
 uv run --project apps/audiothek-downloader pytest
 uv run --project apps/audiothek-downloader pytest -o addopts='' \
   apps/audiothek-downloader/tests/test_main.py
@@ -128,9 +135,9 @@ uv run --project apps/audiothek-downloader pre-commit run --all-files --hook-sta
 ```
 
 The configured hooks verify per-app uv lockfiles, large files, JSON, TOML, YAML,
-Markdown, EOFs, trailing whitespace, Ruff linting and formatting, mypy, and Pyright.
-The pre-push stage also runs `./scripts/run_coverage.sh`. Bash scripts are checked by
-ShellCheck.
+Markdown, GitHub Actions workflows, EOFs, trailing whitespace, Ruff linting and
+formatting, mypy, and Pyright. The pre-push stage also runs
+`./scripts/run-coverage.sh`. Bash scripts are checked by ShellCheck.
 
 ### Syntax and diagnostics
 
@@ -155,11 +162,13 @@ complement -- but do not replace -- the mypy check run in the app environment.
 
 ## CI and Pull Requests
 
-Changes targeting `main` are validated by the `code-quality` job in
+Changes targeting `main` are validated by the `code-quality` and coverage jobs in
 [.github/workflows/ci.yml](.github/workflows/ci.yml). The workflow uses Python 3.14,
-installs each app with `uv sync --locked --project`, and requires Ruff, mypy,
-Pyright, and pytest checks to pass. App release tags use the form
-`<application>-v<version>`.
+installs each app with `uv sync --locked`, and requires Ruff, mypy, Pyright, and
+pytest checks to pass. App release tags use the form
+`<application>-v<major>.<minor>.<patch>` and must point to a commit on `main`.
+Adding an app requires a `pyproject.toml`, `uv.lock`, and Dockerfile under its
+`apps/<application>/` directory for CI checks and image builds to include it.
 
 Do not weaken lint, type, test, or coverage settings to make a change pass. Fix the
 underlying code or add focused tests for the behavior being changed.

@@ -10,54 +10,60 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.4
+    hooks:
+      - id: ruff
+        pass_filenames: false
+        always_run: true
+      - id: ruff-format
+        args: ["--check"]
+        pass_filenames: false
+        always_run: true
+
   - repo: https://github.com/koalaman/shellcheck-precommit
     rev: v0.11.0
     hooks:
       - id: shellcheck
 
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.49.1
     hooks:
       - id: markdownlint
-        # Optional: create a .markdownlint.json
-        args: ["--fix", "--disable", "MD013"] # MD013 disables line length limits
+        args: ["--disable", "MD013"]
 
   - repo: local
     hooks:
       - id: uv-locks
         name: uv locks
-        entry: ./scripts/check_locks.sh
-        language: system
-        pass_filenames: false
-
-      - id: ruff
-        name: Ruff lint
-        entry: uv run --project apps/audiothek-downloader ruff check .
-        language: system
-        pass_filenames: false
-
-      - id: ruff-format
-        name: Ruff format check
-        entry: uv run --project apps/audiothek-downloader ruff format --check .
+        entry: ./scripts/check-locks.sh
         language: system
         pass_filenames: false
 
       - id: mypy
         name: mypy
-        entry: uv run --project apps/audiothek-downloader mypy .
+        entry: ./scripts/run-mypy.sh
         language: system
         pass_filenames: false
+        always_run: true
 
       - id: pyright
         name: pyright
-        entry: uv run --project apps/audiothek-downloader pyright
+        entry: ./scripts/run-pyright.sh
         language: system
         pass_filenames: false
+        always_run: true
 
       # Run test suite across workspace before push
       - id: pytest
         name: pytest
-        entry: ./scripts/run_coverage.sh
+        entry: ./scripts/run-coverage.sh
         language: system
         pass_filenames: false
+        always_run: true
         stages: [pre-push]
