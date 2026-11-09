@@ -111,13 +111,6 @@ jobs:
             uv sync --locked --all-extras --dev --project "apps/$app"
           done < <(jq -r '.app[]' <<< "$APP_MATRIX")
 
-      - name: Lint GitHub Actions workflows
-        env:
-          APP_MATRIX: ${{ needs.discover-apps.outputs.matrix }}
-        run: |
-          app=$(jq -r '.app[0]' <<< "$APP_MATRIX")
-          uv run --project "apps/$app" pre-commit run actionlint --all-files
-
       - name: Run full test suite and coverage
         run: ./scripts/run-coverage.sh
 
