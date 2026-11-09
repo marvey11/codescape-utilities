@@ -94,6 +94,8 @@ each app's tests and the shared library tests in the corresponding app environme
 then combines coverage results.
 The lock and type-check scripts accept an optional app directory name to run a
 targeted check; without one, they discover all app projects.
+The combined coverage report must be at least 80%; this threshold is enforced by
+the root coverage configuration and `./scripts/run-coverage.sh`.
 
 ### Formatting and linting
 
@@ -126,6 +128,8 @@ uv run --project apps/audiothek-downloader pytest -o addopts='' \
 The coverage script runs the complete app and shared library suites. It accepts
 `--html`, `--xml`, or `--all` to generate coverage reports. Focused test commands
 can clear repository-wide pytest options with `-o addopts=''`.
+The full coverage run fails if total coverage is below 80%. Keep or increase that
+coverage level when changing application or shared-library code.
 
 ### Pre-commit verification
 
@@ -169,6 +173,8 @@ pytest checks to pass. App release tags use the form
 `<application>-v<major>.<minor>.<patch>` and must point to a commit on `main`.
 Adding an app requires a `pyproject.toml`, `uv.lock`, and Dockerfile under its
 `apps/<application>/` directory for CI checks and image builds to include it.
+The coverage job also requires at least 80% combined coverage across application
+and shared-library code.
 
 Do not weaken lint, type, test, or coverage settings to make a change pass. Fix the
 underlying code or add focused tests for the behavior being changed.

@@ -49,5 +49,8 @@ checks for every app, or pass an app directory name to target one project:
 ./scripts/run-coverage.sh
 ```
 
+The combined application and shared-library coverage must be at least 80%;
+`run-coverage.sh` fails if the minimum is not met.
+
 When adding an application, provide its `pyproject.toml`, lockfile, tests, and
 Dockerfile. CI and the repository-wide checks will include it automatically.
