@@ -1,36 +1,41 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Determine which apps to check
-if [ $# -gt 0 ]; then
-    APPS=("$1")
-    # Validate that the requested app directory exists
-    if [ ! -d "apps/${APPS[0]}" ]; then
-        echo "Error: App directory 'apps/${APPS[0]}' does not exist." >&2
+repo_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+cd "$repo_root"
+
+if [[ $# -gt 1 ]]; then
+    echo "Usage: $(basename "$0") [APP]" >&2
+    exit 2
+fi
+
+if ! command -v uv >/dev/null 2>&1; then
+    echo "uv is required. Install uv before running this script." >&2
+    exit 1
+fi
+
+app_projects=()
+if [[ $# -eq 1 ]]; then
+    app_project="apps/$1"
+    if [[ "$1" == */* || "$1" == "." || "$1" == ".." ||
+        ! -f "$app_project/pyproject.toml" ]]; then
+        echo "No application project found for '$1'." >&2
         exit 1
     fi
-    # Ensure a pyproject.toml exists within the app directory
-    if [ ! -f "apps/${APPS[0]}/pyproject.toml" ]; then
-        echo "Error: No pyproject.toml found in 'apps/${APPS[0]}'." >&2
-        exit 1
-    fi
+    app_projects+=("$app_project")
 else
-    # Dynamically discover all apps containing a pyproject.toml if no argument is passed
-    APPS=()
-    for dir in apps/*/; do
-        if [ -d "$dir" ] && [ -f "${dir}pyproject.toml" ]; then
-            APPS+=("$(basename "$dir")")
-        fi
+    for app_manifest in apps/*/pyproject.toml; do
+        [[ -f "$app_manifest" ]] || continue
+        app_projects+=("${app_manifest%/pyproject.toml}")
     done
 
-    if [ ${#APPS[@]} -eq 0 ]; then
+    if [[ ${#app_projects[@]} -eq 0 ]]; then
         echo "No application projects found under apps/." >&2
         exit 1
     fi
 fi
 
-for app in "${APPS[@]}"; do
-    app_project="apps/$app"
+for app_project in "${app_projects[@]}"; do
     echo "Checking lockfile for $app_project..."
     uv lock --check --project "$app_project"
 done

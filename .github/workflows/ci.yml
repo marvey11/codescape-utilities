@@ -13,12 +13,43 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  discover-apps:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Discover application projects
+        id: set-matrix
+        shell: bash
+        run: |
+          app_names=()
+          for app_manifest in apps/*/pyproject.toml; do
+            [[ -f "$app_manifest" ]] || continue
+            app_names+=("${app_manifest#apps/}")
+          done
+
+          if [[ ${#app_names[@]} -eq 0 ]]; then
+            echo "No application projects found under apps/." >&2
+            exit 1
+          fi
+
+          matrix=$(printf '%s\n' "${app_names[@]}" \
+            | sed 's@/pyproject\.toml$@@' \
+            | jq -R . \
+            | jq -cs '{app: .}')
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
   code-quality:
+    needs: discover-apps
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        app: [audiothek-downloader]
+        app: ${{ fromJson(needs.discover-apps.outputs.matrix) }}
 
     steps:
       - uses: actions/checkout@v7
@@ -32,36 +63,70 @@ jobs:
           cache-dependency-glob: "apps/*/uv.lock"
 
       - name: Install dependencies
-        run: uv sync --locked --all-extras --dev --project apps/${{ matrix.app }}
+        env:
+          APP: ${{ matrix.app }}
+        run: uv sync --locked --all-extras --dev --project "apps/$APP"
 
       - name: Run Ruff Lint Check
-        run: uv run --project apps/${{ matrix.app }} ruff check .
+        env:
+          APP: ${{ matrix.app }}
+        run: uv run --project "apps/$APP" ruff check .
 
       - name: Run Ruff Format Check
-        run: uv run --project apps/${{ matrix.app }} ruff format --check .
+        env:
+          APP: ${{ matrix.app }}
+        run: uv run --project "apps/$APP" ruff format --check .
 
       - name: MyPy Type-checking
-        run: uv run --project apps/${{ matrix.app }} mypy .
+        env:
+          APP: ${{ matrix.app }}
+        run: ./scripts/run-mypy.sh "$APP"
 
       - name: Pyright Type-checking
-        run: uv run --project apps/${{ matrix.app }} pyright
+        env:
+          APP: ${{ matrix.app }}
+        run: ./scripts/run-pyright.sh "$APP"
 
-      - name: Run Test Suite
+  coverage:
+    needs: discover-apps
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "latest"
+          python-version: "3.14"
+          enable-cache: true
+          cache-dependency-glob: "apps/*/uv.lock"
+
+      - name: Install all application dependencies
+        env:
+          APP_MATRIX: ${{ needs.discover-apps.outputs.matrix }}
+        shell: bash
+        run: |
+          while IFS= read -r app; do
+            uv sync --locked --all-extras --dev --project "apps/$app"
+          done < <(jq -r '.app[]' <<< "$APP_MATRIX")
+
+      - name: Run full test suite and coverage
         run: ./scripts/run-coverage.sh
 
   docker-build-and-push:
     if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
-
     runs-on: ubuntu-latest
-    needs: code-quality
+    needs: [discover-apps, code-quality, coverage]
 
     permissions:
       contents: read
       packages: write
 
     strategy:
+      fail-fast: false
       matrix:
-        app: [audiothek-downloader]
+        app: ${{ fromJson(needs.discover-apps.outputs.matrix) }}
 
     concurrency:
       group: docker-${{ matrix.app }}-${{ github.ref }}

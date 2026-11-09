@@ -6,6 +6,9 @@ Run scripts from the repository root.
   pre-commit and pre-push Git hooks. Install `uv` first, then run
   `./scripts/bootstrap.sh` after cloning.
 - `check-locks.sh` verifies that every app lockfile matches its project manifest.
+  Pass an app directory name to check only that application.
+- `run-mypy.sh` and `run-pyright.sh` run the type checkers for every app and the
+  shared library. Pass an app directory name to check only that application.
 - `run-coverage.sh` runs each app test suite together with `libs/core` tests in
   that app's uv environment, then combines coverage. Pass `--html`, `--xml`, or
   `--all` to generate reports.
